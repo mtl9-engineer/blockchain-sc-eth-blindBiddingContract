@@ -21,14 +21,17 @@ contract bidForNFT {
     event bidDone (address bidder , uint bidd);
     event auctionEnd (address winner , uint _highestBid);
 
-    modifier onlyBefore(_time) {
+    modifier onlyBefore(uint _time) {
         require (block.timestamp < _time);
         _;
     }
 
-    modifier onlyAfter(_time) {
-        require (block.timestamp > _time);
+    modifier onlyAfter(uint _time) {
+        require (block.timestamp >= _time);
         _;
+    }
+    function generateHashedBid( uint _bid , bool fake ) public view returns (bytes32) {
+        return keccak256(abi.encodePacked(_bid,fake));
     }
 
     constructor (uint _biddingTime , uint _revealTime , address payable _beneficiary){
@@ -37,12 +40,10 @@ contract bidForNFT {
         revealEnd = biddingEnd + _revealTime ;
     }
 
-    function generateHashedBid( uint _bid , bool fake ) public view returns (bytes32) {
-        return keccak256(abi.encodePacked(value,fake));
-    }
+    
 
-    function bid(bytes32 _blindedBid) public payable onlyBefore (biddingEnd) {
-        bids[msg.sender].push(Bid({
+    function bid(bytes32 _blindedBid) public payable onlyBefore(biddingEnd) {
+        bids[msg.sender].push(bidAndHash({
             hashedBid : _blindedBid ,
             bid       : msg.value 
         }));
@@ -67,10 +68,10 @@ contract bidForNFT {
             return false;
         }
         if(highestBidder != address(0)){
-            pendingReturns[_highestBidder] += highestBid ; 
+            pendingReturns[_bidder] += highestBid ; 
         }
         highestBid = _amount ;
-        highestBidder = _bidder
+        highestBidder = _bidder;
 
     }
 }
